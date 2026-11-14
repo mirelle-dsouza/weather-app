@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+*.exe
+*.o
+*.obj
+*.a
+*.dll
+
+# Code::Blocks generated files
+*.depend
+*.layout
+*.workspace
+
+# Local secrets - keep your API key off the internet
+secrets.h
+
+# Local copies of third-party SDKs (not needed to build; see README)
+lib/
+include/curl/
+
+# Windows / OneDrive junk
+desktop.ini
+Thumbs.db
+*.lnk
