@@ -4,14 +4,18 @@ A small console program in C that asks for a city and prints its current
 weather, using the [OpenWeatherMap](https://openweathermap.org/api) API for
 the data plus libcurl for the HTTP request and cJSON for parsing the response.
 
+Mumbai is the default city, so pressing Enter on the prompt is enough:
+
 ```
-Enter city name: London
+Enter city name [Mumbai]:
 
 --- Weather Report ---
-City: London
-Temperature: 4.2 °C
-Condition: broken clouds
+City: Mumbai
+Temperature: 32.0 °C
+Condition: smoke
 ```
+
+Typing another name overrides it (`New York`, `Pune`, ...).
 
 ## Requirements
 
@@ -78,9 +82,8 @@ gcc -Wall -g -I"../curl-8.7.1_3-win64-mingw/include" -Iinclude `
 
 ## Notes / limitations
 
-- Only single-word city names are accepted (`scanf("%s", ...)`), so
-  `New York` has to be entered as `NewYork` or the input handling changed
-  to `fgets`.
+- City names are limited to 49 characters, and the name is percent-encoded
+  before it goes into the URL so multi-word cities work.
 - The request is made over plain HTTP. OpenWeatherMap now prefers HTTPS;
   switching to `https://` requires shipping a CA bundle.
 - JSON fields such as `main` / `weather` are assumed to exist; an invalid

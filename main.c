@@ -73,14 +73,38 @@ int main(void) {
     curl = curl_easy_init();
 
     if(curl) {
-        char city[50];
-        printf("Enter city name: ");
-        scanf("%s", city);
+        /* Mumbai is the default city: just press Enter to use it. */
+        char city[50] = "Mumbai";
 
-        char url[256];
+        printf("Enter city name [Mumbai]: ");
+        if (fgets(city, sizeof(city), stdin) != NULL) {
+            size_t len = strlen(city);
+
+            /* drop the trailing newline so "New York" keeps its space */
+            while (len > 0 && (city[len - 1] == '\n' || city[len - 1] == '\r')) {
+                city[--len] = '\0';
+            }
+            if (len == 0) {
+                /* empty input -> go back to the default city */
+                strcpy(city, "Mumbai");
+            }
+        }
+
+        /* percent-encode the city name so spaces and accents survive */
+        char *escapedCity = curl_easy_escape(curl, city, 0);
+        if (escapedCity == NULL) {
+            fprintf(stderr, "Could not encode city name.\n");
+            curl_easy_cleanup(curl);
+            curl_global_cleanup();
+            free(chunk.memory);
+            return 1;
+        }
+
+        char url[512];
         snprintf(url, sizeof(url),
                  "http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric",
-                 city, apiKey);
+                 escapedCity, apiKey);
+        curl_free(escapedCity);
 
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
@@ -102,8 +126,14 @@ int main(void) {
                     cJSON *weather0 = cJSON_GetArrayItem(weatherArr, 0);
                     const char *desc = cJSON_GetObjectItem(weather0, "description")->valuestring;
 
+                    /* prefer the canonical city name sent back by the API */
+                    cJSON *nameItem = cJSON_GetObjectItem(json, "name");
+                    const char *cityName = (nameItem && cJSON_IsString(nameItem))
+                                               ? nameItem->valuestring
+                                               : city;
+
                     printf("\n--- Weather Report ---\n");
-                    printf("City: %s\n", city);
+                    printf("City: %s\n", cityName);
                     printf("Temperature: %.1f °C\n", temp);
                     printf("Condition: %s\n", desc);
                 }
